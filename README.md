@@ -63,6 +63,25 @@ pamac install cppinsights
 
 ```
 
+#### With Doom Emacs
+In `packages.el`:
+``` elisp
+(package! cppinsights
+  :recipe (:host github :repo "chrischen3121/cppinsights.el"))
+```
+
+In `config.el`:
+``` elisp
+(use-package! cppinsights
+  :custom
+  (cppinsights-binary "insights")  ;; Path to the insights binary
+  (cppinsights-extra-args '("-std=c++17"))  ;; Additional arguments to pass to C++ Insights
+  :config
+  ;; Add keybinding for cppinsights-run
+  (map! :map c++-mode-map
+        :desc "Run C++ Insights" "C-c i" #'cppinsights-run))
+```
+
 #### With `package-vc-install` (Emacs 30+ built-in)
 ``` elisp
 (package-vc-install '(cppinsights :url "https://github.com/chrischen3121/cppinsights.el"))
