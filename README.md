@@ -1,7 +1,6 @@
 # cppinsights.el
 
 [![EMACS](https://img.shields.io/badge/Emacs-26.1-922793?logo=gnu-emacs&logoColor=b39ddb&.svg)](https://www.gnu.org/savannah-checkouts/gnu/emacs/emacs.html)
-
 ![GitHub License](https://img.shields.io/github/license/chrischen3121/cppinsights.el)
 
 
