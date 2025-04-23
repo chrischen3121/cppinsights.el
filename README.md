@@ -42,26 +42,20 @@ sudo make install
 #### Arch Linux
 Using AUR:
 ```bash
-yay -S cpp-insights
-```
-Or:
-```bash
-git clone https://aur.archlinux.org/cpp-insights.git
-cd cpp-insights
-makepkg -si
+pamac install cppinsights
 ```
 
 ### Package Installation
 
-1. Clone this repository:
-```bash
-git clone https://github.com/yourusername/cppinsights.el.git ~/.emacs.d/cppinsights.el
+#### With Straight
+``` elisp
+(use-package cppinsights
+  :straight (:host github :repo "chrischen3121/cppinsights.el"))
 ```
 
-2. Add to your Emacs configuration:
-```elisp
-(add-to-list 'load-path "~/.emacs.d/cppinsights.el")
-(require 'cppinsights)
+#### With `package-vc-install` (Emacs 30+ built-in)
+``` elisp
+(package-vc-install '(cppinsights :url "https://github.com/chrischen3121/cppinsights.el"))
 ```
 
 ## Usage
