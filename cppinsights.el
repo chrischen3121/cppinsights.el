@@ -1,10 +1,13 @@
-;;; -*- lexical-binding: t; -*-
-;;; cppinsights.el --- Integration with cppinsights tool
+;;; cppinsights.el --- Integration with cppinsights tool -*- lexical-binding: t; -*-
 
 ;; Author: Chris Chen <chrischen@ignity.xyz>
 ;; Version: 0.1
 ;; Keywords: c++, tools, cppinsights
 ;; Package-Requires: ((emacs "26.1"))
+;; URL: https://github.com/chrischen3121/cppinsights.el
+;; SPDX-License-Identifier: Apache-2.0
+
+;; This file is not part of GNU Emacs.
 
 ;;; Commentary:
 ;; This package provides integration with the cppinsights command-line tool.
@@ -60,7 +63,7 @@ BUFFER-NAME is the name of the buffer to create."
          '(("\\*cppinsights.*\\*"
             (display-buffer-reuse-window display-buffer-in-side-window)
             (side . right)
-            (window-width . 70)
+            (window-width . 0.4)
             (reusable-frames . visible)))))
     (select-window (display-buffer buffer))))
 
