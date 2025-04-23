@@ -50,7 +50,14 @@ pamac install cppinsights
 #### With Straight
 ``` elisp
 (use-package cppinsights
-  :straight (:host github :repo "chrischen3121/cppinsights.el"))
+  :straight (:host github :repo "chrischen3121/cppinsights.el")
+  :custom
+  ;; Customize variables as needed
+  (cppinsights-binary "insights")  ;; Path to the insights binary
+  (cppinsights-extra-args '("-std=c++17"))  ;; Additional arguments to pass to C++ Insights
+  :bind
+  ;; Add keybinding for cppinsights-run
+  ("C-c i" . cppinsights-run))
 ```
 
 #### With `package-vc-install` (Emacs 30+ built-in)
