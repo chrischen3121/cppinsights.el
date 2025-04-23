@@ -73,9 +73,10 @@ In `packages.el`:
 In `config.el`:
 ``` elisp
 (use-package! cppinsights
+  :commands cppinsights-run
   :custom
-  (cppinsights-binary "insights")  ;; Path to the insights binary
-  (cppinsights-extra-args '("-std=c++17"))  ;; Additional arguments to pass to C++ Insights
+  (cppinsights-program "insights")  ;; Path to the insights binary
+  (cppinsights-clang-opts '("-O0" "-std=c++17"))  ;; Additional arguments to pass to internal clang
   :config
   ;; Add keybinding for cppinsights-run
   (map! :map c++-mode-map
@@ -101,5 +102,5 @@ You can customize the package by:
 You can add a key binding to your Emacs configuration:
 
 ```elisp
-(global-set-key (kbd "C-c i") 'cppinsights-run)
+(keymap-set c++-mode-map "C-c c i" #'cppinsights-run)
 ```
