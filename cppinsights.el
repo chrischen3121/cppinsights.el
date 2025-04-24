@@ -59,13 +59,15 @@ BUFFER-NAME is the name of the buffer to create."
 
 (defun cppinsights--display-buffer (buffer)
   "Display BUFFER in a side window."
-  (let ((display-buffer-alist
-         '(("\\*cppinsights.*\\*"
-            (display-buffer-reuse-window display-buffer-in-side-window)
-            (side . right)
-            (window-width . 0.4)
-            (reusable-frames . visible)))))
-    (select-window (display-buffer buffer))))
+  (if (fboundp '+popup-buffer)
+      (+popup-buffer buffer)
+    (let ((display-buffer-alist
+           '(("\\*cppinsights.*\\*"
+              (display-buffer-reuse-window display-buffer-in-side-window)
+              (side . right)
+              (window-width . 0.4)
+              (reusable-frames . visible)))))
+      (select-window (display-buffer buffer)))))
 
 (defun cppinsights--build-command (file-name)
   "Build the command to run cppinsights on FILE-NAME."
