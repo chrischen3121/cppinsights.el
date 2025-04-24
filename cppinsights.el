@@ -63,8 +63,8 @@ BUFFER-NAME is the name of the buffer to create."
 (defun cppinsights--display-buffer (buffer)
   "Display BUFFER in a side window."
   (if (fboundp '+popup-buffer)
-      (+popup-buffer buffer '((side . right)
-                              (size . insights--window-width-percent)))
+    (+popup-buffer buffer `((side . right)
+                            (window-width . ,insights--window-width-percent)))
     (let ((display-buffer-alist
            '(("\\*cppinsights.*\\*"
               (display-buffer-reuse-window display-buffer-in-side-window)
