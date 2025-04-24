@@ -55,7 +55,7 @@ pamac install cppinsights
 ``` elisp
 (use-package cppinsights
   :straight (:host github :repo "chrischen3121/cppinsights.el")
-  :commands
+  :commands cppinsights-run
   :custom
   ;; Customize variables as needed
   (cppinsights-binary "insights")  ;; Path to the insights binary
@@ -81,7 +81,7 @@ In `config.el`:
   :custom
   (cppinsights-program "insights")  ;; Path to the insights binary
   (cppinsights-clang-opts '("-O0" "-std=c++17"))  ;; Additional arguments to pass to internal clang
-  :config
+  :init
   ;; Add keybinding for cppinsights-run
   (map! :map c++-mode-map
         :desc "Run C++ Insights" "C-c i" #'cppinsights-run))
