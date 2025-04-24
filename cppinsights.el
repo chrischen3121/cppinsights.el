@@ -30,6 +30,9 @@
   :type '(repeat string)
   :group 'cppinsights)
 
+(defvar insights--window-width-percent 0.4
+  "Width of the side window for displaying cppinsights results.")
+
 (defun cppinsights--check-and-save-buffer ()
   "Check if buffer needs saving and prompt user to save if needed."
   (when (buffer-modified-p)
@@ -60,14 +63,16 @@ BUFFER-NAME is the name of the buffer to create."
 (defun cppinsights--display-buffer (buffer)
   "Display BUFFER in a side window."
   (if (fboundp '+popup-buffer)
-      (+popup-buffer buffer '((side . right) (size . 0.4)))
+      (+popup-buffer buffer '((side . right)
+                              (size . insights--window-width-percent)))
     (let ((display-buffer-alist
            '(("\\*cppinsights.*\\*"
               (display-buffer-reuse-window display-buffer-in-side-window)
               (side . right)
-              (window-width . 0.4)
+              (window-width . insights--window-width-percent)
               (reusable-frames . visible)))))
-      (select-window (display-buffer buffer)))))
+      (display-buffer buffer)))
+  (select-window (get-buffer-window buffer)))
 
 (defun cppinsights--build-command (file-name)
   "Build the command to run cppinsights on FILE-NAME."
@@ -86,7 +91,6 @@ BUFFER-NAME is the name of the buffer to create."
 PROCESS is the process object, EVENT is the process event."
   (when (string= event "finished\n")
     (with-current-buffer (process-buffer process)
-      (setq buffer-read-only t)
       (use-local-map (let ((map (make-sparse-keymap)))
                        (set-keymap-parent map c++-mode-map)
                        (define-key map (kbd "q") 'kill-buffer-and-window)
