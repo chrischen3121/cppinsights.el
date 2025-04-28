@@ -15,6 +15,7 @@
 ;; in a popup buffer.
 
 ;;; Code:
+(require 'cc-mode)
 
 (defgroup cppinsights nil
   "Integration with cppinsights tool."
@@ -30,7 +31,7 @@
   :type '(repeat string)
   :group 'cppinsights)
 
-(defvar insights--window-width-percent 0.4
+(defvar cppinsights--window-width-percent 0.4
   "Width of the side window for displaying cppinsights results.")
 
 (defun cppinsights--check-and-save-buffer ()
@@ -63,13 +64,13 @@ BUFFER-NAME is the name of the buffer to create."
 (defun cppinsights--display-buffer (buffer)
   "Display BUFFER in a side window."
   (if (fboundp '+popup-buffer)
-    (+popup-buffer buffer `((side . right)
-                            (window-width . ,insights--window-width-percent)))
+      (+popup-buffer buffer `((side . right)
+                              (window-width . ,cppinsights--window-width-percent)))
     (let ((display-buffer-alist
            '(("\\*cppinsights.*\\*"
               (display-buffer-reuse-window display-buffer-in-side-window)
               (side . right)
-              (window-width . insights--window-width-percent)
+              (window-width . cppinsights--window-width-percent)
               (reusable-frames . visible)))))
       (display-buffer buffer)))
   (select-window (get-buffer-window buffer)))
