@@ -20,6 +20,7 @@
 
 ;;; Code:
 (require 'cc-mode)
+(require 'project)
 
 (defgroup cppinsights nil
   "Integration with cppinsights tool."
@@ -38,147 +39,129 @@
 (defvar cppinsights--window-width-percent 0.4
   "Width of the side window for displaying cppinsights results.")
 
-(defun cppinsights--check-and-save-buffer ()
-  "Check if buffer needs saving and prompt user to save if needed."
-  (when (buffer-modified-p)
-    (when (y-or-n-p "Buffer has unsaved changes. Save first? ")
-      (save-buffer))))
-
 (defun cppinsights--validate-file ()
-  "Validate that current buffer is a C++ file with a filename."
-  (let ((file-name (buffer-file-name)))
-    (unless file-name
+  "Validate that current buffer is a C++ file with a filename.
+Checks file extension to ensure it's a recognized C++ source or header file.
+Returns the filename on success or signals an error if requirements aren't met."
+  (let ((filename (buffer-file-name)))
+    (unless filename
       (error "Buffer is not visiting a file"))
     
-    (unless (string-match-p "\\.\\(cpp\\|cc\\|cxx\\|h\\|hpp\\|hxx\\)$" file-name)
+    (unless (string-match-p "\\.\\(cpp\\|cc\\|cxx\\|h\\|hpp\\|hxx\\)$" filename)
       (error "Not a C++ file"))
     
-    file-name))
+    filename))
 
-(defun cppinsights--prepare-output-buffer (buffer-name &optional mode)
-  "Prepare the output buffer for cppinsights results.
-BUFFER-NAME is the name of the buffer to create.
-MODE is the major mode to use (defaults to c++-mode)."
-  (let ((buffer (get-buffer-create buffer-name)))
-    (with-current-buffer buffer
-      (erase-buffer)
-      (funcall (or mode 'c++-mode))
-      (setq buffer-read-only nil)
-      ;; Set up key bindings
-      (use-local-map (let ((map (make-sparse-keymap)))
-                       (set-keymap-parent map (current-local-map))
-                       (define-key map (kbd "q") 'kill-buffer-and-window)
-                       map)))
-    buffer))
-
-(defun cppinsights--display-buffer (buffer)
-  "Display BUFFER in a side window."
-  (if (fboundp '+popup-buffer)
-      (+popup-buffer buffer `((side . right)
-                              (window-width . ,cppinsights--window-width-percent)))
-    (let ((display-buffer-alist
-           `(("\\*cppinsights.*\\*"
-              (display-buffer-reuse-window display-buffer-in-side-window)
-              (side . right)
-              (window-width . ,cppinsights--window-width-percent)
-              (reusable-frames . visible)))))
-      (display-buffer buffer)))
-  (select-window (get-buffer-window buffer)))
-
-(defun cppinsights--build-command (file-name)
-  "Build the command to run cppinsights on FILE-NAME."
-  (let* ((default-directory (file-name-directory file-name))
-         (has-compile-commands (file-exists-p "compile_commands.json")))
-    (if has-compile-commands
+(defun cppinsights--build-command (filename)
+  "Build the command to run cppinsights on FILENAME.
+Detects if a compile_commands.json exists in the project root and uses
+an appropriate command format based on this discovery. Will use project-provided
+compilation settings when available, otherwise falls back to configured options."
+  (let* ((current-dir (file-name-directory filename))
+         (current_proj (project-current))
+         (proj-root (if current_proj
+                        (project-root current_proj)
+                      current-dir))
+         (use-compile-db (file-exists-p
+                          (expand-file-name "compile_commands.json" proj-root))))
+    (if use-compile-db
         (append (list cppinsights-program)
-                (list file-name))
+                (list filename))
       (append (list cppinsights-program)
-              (list file-name)
+              (list filename)
               '("--")
               cppinsights-clang-opts))))
-
-(defun cppinsights--cleanup-buffer (buffer)
-  "Safely kill BUFFER if it exists and is live."
-  (when (and buffer (buffer-live-p buffer))
-    (kill-buffer buffer)))
 
 (defun cppinsights--handle-process-success (stdout-buffer stderr-buffer)
   "Handle successful cppinsights process.
 Show STDOUT-BUFFER with C++ mode and clean up STDERR-BUFFER."
+  (kill-buffer stderr-buffer)
   (with-current-buffer stdout-buffer
-    (goto-char (point-min)))
-  (cppinsights--display-buffer stdout-buffer)
-  
-  ;; Clean up stderr buffer since we don't need it
-  (cppinsights--cleanup-buffer stderr-buffer))
+    (goto-char (point-min))
+    (c++-mode)
+    (read-only-mode 1)
+    (let ((map (make-sparse-keymap)))
+      (keymap-set map (kbd "q") 'kill-buffer-and-window)
+      (use-local-map map))
+    (display-buffer-in-side-window
+     (current-buffer)
+     `((side . right)
+       (window-width . ,cppinsights--window-width-percent))))
+  (select-window (get-buffer-window stdout-buffer)))
 
-(defun cppinsights--handle-process-error (status source-buffer stdout-buffer stderr-buffer)
+(defun cppinsights--handle-process-error (status stdout-buffer stderr-buffer)
   "Handle failed cppinsights process.
 STATUS is the process exit status.
-SOURCE-BUFFER is the original buffer name.
-STDOUT-BUFFER is the buffer with stdout content.
-STDERR-BUFFER is the buffer with stderr content."
-  (let ((error-buffer (cppinsights--prepare-output-buffer 
-                       (format "*cppinsights error: %s*" source-buffer)
-                       'compilation-mode)))
-    ;; Add error information to the buffer
-    (with-current-buffer error-buffer
-      (let ((inhibit-read-only t))
-        (erase-buffer)
-        (insert (format "C++ Insights process failed with status %d\n\n" status))
-        ;; Add stderr content
-        (when (buffer-live-p stderr-buffer)
-          (let ((stderr-content (with-current-buffer stderr-buffer
-                                  (buffer-string))))
-            (unless (string-empty-p stderr-content)
-              (insert stderr-content))))
-        (goto-char (point-min))))
-    
-    ;; Display the error buffer
-    (cppinsights--display-buffer error-buffer)
-    
-    ;; Clean up unneeded buffers
-    (cppinsights--cleanup-buffer stdout-buffer)
-    (cppinsights--cleanup-buffer stderr-buffer)))
+STDOUT-BUFFER is the buffer with stdout content (which is discarded).
+STDERR-BUFFER is the buffer with stderr content, displayed in compilation mode
+to provide error navigation and context about the failure."
+  (kill-buffer stdout-buffer)
+  (with-current-buffer stderr-buffer
+    (goto-char (point-min))
+    (compilation-mode)
+    (read-only-mode 1)
+    (let ((map (make-sparse-keymap)))
+      (set-keymap-parent map (current-local-map))
+      (keymap-set map (kbd "q") 'kill-buffer-and-window)
+      (use-local-map map))
+    (display-buffer-at-bottom
+     (current-buffer)
+     '((window-height . 0.3))))
+  (select-window (get-buffer-window stderr-buffer)))
 
 (defun cppinsights--process-sentinel (process event)
   "Handle the completion of the cppinsights process.
-PROCESS is the process object, EVENT is the process event."
+PROCESS is the process object, EVENT is the process event.
+On success (exit code 0), displays formatted C++ output in a side window.
+On failure, displays error messages in compilation mode for easier navigation."
   (let ((status (process-exit-status process))
         (stdout-buffer (process-buffer process))
-        (stderr-buffer (process-get process 'stderr-buffer))
-        (source-buffer (process-get process 'source-buffer)))
+        (stderr-buffer (process-get process 'stderr-buffer)))
     
     (if (= status 0)
         (cppinsights--handle-process-success stdout-buffer stderr-buffer)
-      (cppinsights--handle-process-error status source-buffer stdout-buffer stderr-buffer))))
+      (cppinsights--handle-process-error status stdout-buffer stderr-buffer))))
+
+(defun cppinsights--erase-buffer (buffer)
+  "Erase the contents of BUFFER.
+Temporarily disables read-only mode if enabled to ensure contents can be cleared."
+  (with-current-buffer buffer
+    (let ((inhibit-read-only t))
+      (erase-buffer))))
 
 ;;;###autoload
 (defun cppinsights-run ()
-  "Run cppinsights on the current buffer and show results in a popup."
+  "Run cppinsihgts on the current buffer and show results.
+
+- Is there a complile_commands.json in project root? or in current directory?
+  Run `insights compile_commands.json` on the current buffer.
+- Or Run `insights <filename> -- <cppinsights-clang-opts>`
+- If C++ insights failed, show the error in compilation-mode.
+"
   (interactive)
-  (cppinsights--check-and-save-buffer)
-  
-  (let* ((file-name (cppinsights--validate-file))
+  (save-buffer)
+  (let* ((filename (cppinsights--validate-file))
          (buffer-name (buffer-name))
-         (stdout-buffer-name (format "*cppinsights %s*" buffer-name))
-         (stderr-buffer-name (format "*cppinsights %s* stderr" buffer-name))
-         (stdout-buffer (cppinsights--prepare-output-buffer stdout-buffer-name))
-         (stderr-buffer (generate-new-buffer stderr-buffer-name))
-         (command (cppinsights--build-command file-name))
+         (stdout-buffer-name (format "*C++ Insights %s*" buffer-name))
+         (stderr-buffer-name (format "*C++ Insights %s* stderr" buffer-name))
+         (stdout-buffer (get-buffer-create stdout-buffer-name))
+         (stderr-buffer (get-buffer-create stderr-buffer-name))
+         (command (cppinsights--build-command filename))
          (proc nil))
-    
+    (cppinsights--erase-buffer stdout-buffer)
+    (cppinsights--erase-buffer stderr-buffer)
+
     ;; Start the process (no buffer displayed initially)
     (setq proc (make-process
-                :name "cppinsights"
+                :name "C++ Insights"
                 :buffer stdout-buffer
                 :command command
                 :stderr stderr-buffer
+                :connection-type 'pipe
                 :sentinel #'cppinsights--process-sentinel))
     
     ;; Store additional information for use in the sentinel
-    (process-put proc 'stderr-buffer stderr-buffer)
-    (process-put proc 'source-buffer buffer-name)))
+    (process-put proc 'stderr-buffer stderr-buffer)))
 
 (provide 'cppinsights)
 ;;; cppinsights.el ends here
