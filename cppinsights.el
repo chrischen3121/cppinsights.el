@@ -77,7 +77,6 @@ compilation settings when available, otherwise falls back to configured options.
 Show STDOUT-BUFFER with C++ mode and clean up STDERR-BUFFER."
   (kill-buffer stderr-buffer)
   (with-current-buffer stdout-buffer
-    (goto-char (point-min))
     (c++-mode)
     (read-only-mode 1)
     (let ((map (make-sparse-keymap)))
@@ -87,7 +86,8 @@ Show STDOUT-BUFFER with C++ mode and clean up STDERR-BUFFER."
      (current-buffer)
      `((side . right)
        (window-width . ,cppinsights--window-width-percent))))
-  (select-window (get-buffer-window stdout-buffer)))
+  (select-window (get-buffer-window stdout-buffer))
+  (goto-char (point-min)))
 
 (defun cppinsights--handle-process-error (status stdout-buffer stderr-buffer)
   "Handle failed cppinsights process.
@@ -97,7 +97,6 @@ STDERR-BUFFER is the buffer with stderr content, displayed in compilation mode
 to provide error navigation and context about the failure."
   (kill-buffer stdout-buffer)
   (with-current-buffer stderr-buffer
-    (goto-char (point-min))
     (compilation-mode)
     (read-only-mode 1)
     (let ((map (make-sparse-keymap)))
@@ -107,7 +106,8 @@ to provide error navigation and context about the failure."
     (display-buffer-at-bottom
      (current-buffer)
      '((window-height . 0.3))))
-  (select-window (get-buffer-window stderr-buffer)))
+  (select-window (get-buffer-window stderr-buffer))
+  (goto-char (point-min)))
 
 (defun cppinsights--process-sentinel (process event)
   "Handle the completion of the cppinsights process.
