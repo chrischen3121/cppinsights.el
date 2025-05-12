@@ -108,9 +108,9 @@ to provide error navigation and context about the failure."
   (select-window (get-buffer-window stderr-buffer))
   (goto-char (point-min)))
 
-(defun cppinsights--process-sentinel (process)
+(defun cppinsights--process-sentinel (process _ignored)
   "Handle the completion of the cppinsights process.
-PROCESS is the process object, EVENT is the process event.
+PROCESS is the process object
 On success (exit code 0), displays formatted C++ output in a side window.
 On failure, displays error messages in compilation mode for easier navigation."
   (let ((status (process-exit-status process))
