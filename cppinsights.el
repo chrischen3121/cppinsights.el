@@ -3,7 +3,7 @@
 ;; Author: Chris Chen <chrischen@ignity.xyz>
 ;; Version: 0.1
 ;; Keywords: c++, tools, cppinsights
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "28.1"))
 ;; URL: https://github.com/chrischen3121/cppinsights.el
 ;; SPDX-License-Identifier: Apache-2.0
 
@@ -89,9 +89,8 @@ Show STDOUT-BUFFER with C++ mode and clean up STDERR-BUFFER."
   (select-window (get-buffer-window stdout-buffer))
   (goto-char (point-min)))
 
-(defun cppinsights--handle-process-error (status stdout-buffer stderr-buffer)
+(defun cppinsights--handle-process-error (stdout-buffer stderr-buffer)
   "Handle failed cppinsights process.
-STATUS is the process exit status.
 STDOUT-BUFFER is the buffer with stdout content (which is discarded).
 STDERR-BUFFER is the buffer with stderr content, displayed in compilation mode
 to provide error navigation and context about the failure."
@@ -109,7 +108,7 @@ to provide error navigation and context about the failure."
   (select-window (get-buffer-window stderr-buffer))
   (goto-char (point-min)))
 
-(defun cppinsights--process-sentinel (process event)
+(defun cppinsights--process-sentinel (process)
   "Handle the completion of the cppinsights process.
 PROCESS is the process object, EVENT is the process event.
 On success (exit code 0), displays formatted C++ output in a side window.
@@ -120,11 +119,12 @@ On failure, displays error messages in compilation mode for easier navigation."
     
     (if (= status 0)
         (cppinsights--handle-process-success stdout-buffer stderr-buffer)
-      (cppinsights--handle-process-error status stdout-buffer stderr-buffer))))
+      (cppinsights--handle-process-error stdout-buffer stderr-buffer))))
 
 (defun cppinsights--erase-buffer (buffer)
   "Erase the contents of BUFFER.
-Temporarily disables read-only mode if enabled to ensure contents can be cleared."
+Temporarily disables read-only mode if enabledto ensure
+contents can be cleared."
   (with-current-buffer buffer
     (let ((inhibit-read-only t))
       (erase-buffer))))
@@ -132,12 +132,10 @@ Temporarily disables read-only mode if enabled to ensure contents can be cleared
 ;;;###autoload
 (defun cppinsights-run ()
   "Run cppinsihgts on the current buffer and show results.
-
 - Is there a complile_commands.json in project root? or in current directory?
   Run `insights compile_commands.json` on the current buffer.
 - Or Run `insights <filename> -- <cppinsights-clang-opts>`
-- If C++ insights failed, show the error in compilation-mode.
-"
+- If C++ insights failed, show the error in `compilation-mode`."
   (interactive)
   (save-buffer)
   (let* ((filename (cppinsights--validate-file))
