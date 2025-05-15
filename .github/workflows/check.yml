@@ -1,0 +1,20 @@
+name: check
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: purcell/setup-emacs@v7.0
+        with:
+          version: 30.1
+      - uses: leotaku/elisp-check@v1.4.1
+        with:
+          file: "cppinsights.el"
+          warnings_as_errors: true
