@@ -55,8 +55,9 @@ Returns the filename on success or signals an error if requirements aren't met."
 (defun cppinsights--build-command (filename)
   "Build the command to run cppinsights on FILENAME.
 Detects if a compile_commands.json exists in the project root and uses
-an appropriate command format based on this discovery. Will use project-provided
-compilation settings when available, otherwise falls back to configured options."
+an appropriate command format based on this discovery.  Will use
+project-provided compilation settings when available, otherwise
+falls back to configured options."
   (let* ((current-dir (file-name-directory filename))
          (current_proj (project-current))
          (proj-root (if current_proj
@@ -110,7 +111,7 @@ to provide error navigation and context about the failure."
 
 (defun cppinsights--process-sentinel (process _ignored)
   "Handle the completion of the cppinsights process.
-PROCESS is the process object
+PROCESS is the process object.
 On success (exit code 0), displays formatted C++ output in a side window.
 On failure, displays error messages in compilation mode for easier navigation."
   (let ((status (process-exit-status process))
@@ -123,7 +124,7 @@ On failure, displays error messages in compilation mode for easier navigation."
 
 (defun cppinsights--erase-buffer (buffer)
   "Erase the contents of BUFFER.
-Temporarily disables read-only mode if enabledto ensure
+Temporarily disables read-only mode if enabled to ensure
 contents can be cleared."
   (with-current-buffer buffer
     (let ((inhibit-read-only t))
