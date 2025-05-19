@@ -45,10 +45,10 @@ Checks file extension to ensure it's a recognized C++ source or header file.
 Returns the filename on success or signals an error if requirements aren't met."
   (let ((filename (buffer-file-name)))
     (unless filename
-      (error "Buffer is not visiting a file"))
+      (user-error "Buffer is not visiting a file"))
     
     (unless (string-match-p "\\.\\(cpp\\|cc\\|cxx\\|h\\|hpp\\|hxx\\)$" filename)
-      (error "Not a C++ file"))
+      (user-error "Not a C++ file"))
     
     filename))
 
@@ -138,7 +138,12 @@ contents can be cleared."
 - Or Run `insights <filename> -- <cppinsights-clang-opts>`
 - If C++ insights failed, show the error in `compilation-mode`."
   (interactive)
-  (save-buffer)
+  (let ((buffer-name (buffer-name)))
+    (if (or (not (buffer-modified-p))
+            (yes-or-no-p
+             (format "Buffer %s is modified. Save changes? " buffer-name)))
+        (save-buffer)
+      (user-error "Changes must be saved before running cppinsights")))
   (let* ((filename (cppinsights--validate-file))
          (buffer-name (buffer-name))
          (stdout-buffer-name (format "*C++ Insights %s*" buffer-name))
