@@ -141,7 +141,7 @@ contents can be cleared."
   (let ((buffer-name (buffer-name)))
     (if (or (not (buffer-modified-p))
             (yes-or-no-p
-             (format "Buffer %s is modified. Save changes? " buffer-name)))
+             (format "Buffer %s is modified.  Save changes?" buffer-name)))
         (save-buffer)
       (user-error "Changes must be saved before running cppinsights")))
   (let* ((filename (cppinsights--validate-file))
