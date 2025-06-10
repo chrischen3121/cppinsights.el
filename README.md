@@ -2,6 +2,7 @@
 
 [![EMACS](https://img.shields.io/badge/Emacs-26.1-922793?logo=gnu-emacs&logoColor=b39ddb&.svg)](https://www.gnu.org/savannah-checkouts/gnu/emacs/emacs.html)
 ![GitHub License](https://img.shields.io/github/license/chrischen3121/cppinsights.el)
+[![MELPA](https://melpa.org/packages/cppinsights-badge.svg)](https://melpa.org/#/cppinsights)
 
 
 An Emacs package that integrates with [C++ Insights](https://cppinsights.io/), a tool that transforms C++ source code into its expanded form, revealing the details the compiler sees after applying language features like templates, operator overloading, and lambda functions.
